@@ -1,0 +1,96 @@
+{
+  "reward_points_min": {
+    "description": "单次奖励积分最小值",
+    "type": "int",
+    "default": 10
+  },
+  "reward_points_max": {
+    "description": "单次奖励积分最大值",
+    "type": "int",
+    "default": 50
+  },
+  "reward_ingot_min": {
+    "description": "单次奖励元宝最小值",
+    "type": "int",
+    "default": 5
+  },
+  "reward_ingot_max": {
+    "description": "单次奖励元宝最大值",
+    "type": "int",
+    "default": 30
+  },
+  "reward_points_prob": {
+    "description": "奖励积分的概率(0-1)",
+    "type": "float",
+    "default": 0.5
+  },
+  
+  "exchange_roles": {
+    "description": "兑换权限模式（admin_only=仅管理员；self_or_admin=本人或管理员）",
+    "type": "string",
+    "options": ["admin_only", "self_or_admin"],
+    "default": "self_or_admin"
+  },
+  "storage_scope": {
+    "description": "数据统计作用域（group=按群，user=按用户，global=全局）",
+    "type": "string",
+    "options": ["group", "user", "global"],
+    "default": "group"
+  },
+  "max_rank_list_size": {
+    "description": "排行榜显示条数",
+    "type": "int",
+    "default": 10
+  },
+  "message_title": {
+    "description": "签到成功标题行",
+    "type": "string",
+    "default": "@小卡拉米，签到成功"
+  },
+  "message_separator": {
+    "description": "分隔线",
+    "type": "string",
+    "default": "-------------------------"
+  },
+  "label_id": {
+    "description": "签到号码标签",
+    "type": "string",
+    "default": "●签到号码："
+  },
+  "label_days": {
+    "description": "签到天数标签",
+    "type": "string",
+    "default": "●签到天数："
+  },
+  "label_gain_points": {
+    "description": "获得积分标签",
+    "type": "string",
+    "default": "●获得积分："
+  },
+  "label_gain_ingots": {
+    "description": "获得元宝标签",
+    "type": "string",
+    "default": "●获得元宝："
+  },
+  "label_total_points": {
+    "description": "积分数量标签",
+    "type": "string",
+    "default": "●积分数量："
+  },
+  "label_total_ingots": {
+    "description": "元宝数量标签",
+    "type": "string",
+    "default": "●元宝数量："
+  },
+  "exchange_points_success_tpl": {
+    "description": "积分兑换成功提示模板，可用占位符 {amount}、{points}",
+    "type": "string",
+    "default": "已兑换积分 {amount}，剩余积分：{points}"
+  },
+  "exchange_ingots_success_tpl": {
+    "description": "元宝兑换成功提示模板，可用占位符 {amount}、{ingots}",
+    "type": "string",
+    "default": "已兑换元宝 {amount}，剩余元宝：{ingots}"
+  }
+}
+
