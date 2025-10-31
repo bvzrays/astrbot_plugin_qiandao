@@ -224,12 +224,14 @@ class NapcatCheckin(Star):
             yield event.plain_result("签到出现异常，请稍后再试")
 
     def _parse_exchange_args(self, event: AstrMessageEvent) -> Tuple[int, str]:
-        """从消息中解析兑换数量与目标用户（@优先，其次纯数字QQ）。
-        返回 (amount, target_uid or "")，amount<=0 代表未解析到。
+        """解析兑换数量与目标用户。
+        - 目标优先取 @ 的 qq；若无 @，再尝试从纯数字 token 里取一个长数字作为 QQ。
+        - 数量仅从 Plain 文本组件中解析，取“最后一个整数”作为数量，避免把时间等误判为数量。
+        返回 (amount, target_uid or "")。
         """
         amount = 0
         target_uid = ""
-        # 提取 @
+        # 1) 目标：@ 优先
         try:
             for comp in event.get_messages():
                 if isinstance(comp, Comp.At) and getattr(comp, "qq", None):
@@ -237,39 +239,55 @@ class NapcatCheckin(Star):
                     break
         except Exception:
             pass
-        # 提取数字（数量 或 可能的 QQ）
+
+        # 2) 数量：仅从 Plain 组件解析，取最后一个整数
+        plain_text = []
         try:
-            texts = []
             for comp in event.get_messages():
                 if isinstance(comp, Comp.Plain):
-                    texts.append(comp.text)
-            texts.append(event.message_str or "")
-            joined = " ".join(texts)
-            # 取所有整数样式数字
-            nums = []
-            cur = ""
-            for ch in joined:
-                if ch.isdigit():
-                    cur += ch
-                else:
-                    if cur:
-                        nums.append(cur)
-                        cur = ""
-            if cur:
-                nums.append(cur)
-            # 选择一个作为数量：优先长度较小的数值（避免把QQ当数量）
-            cand = sorted((int(n) for n in nums if n.isdigit()), key=lambda x: (len(str(x)), x))
-            if cand:
-                amount = cand[0]
-            # 若未识别到 @，且存在看似QQ的长数字（>=5位），取其作为目标
-            if not target_uid:
-                qq_cands = [n for n in nums if n.isdigit() and len(n) >= 5]
-                if qq_cands:
-                    # 取第一个较长数字作为 QQ
-                    target_uid = qq_cands[0]
+                    t = str(getattr(comp, "text", ""))
+                    if t:
+                        plain_text.append(t)
         except Exception:
             pass
+        tokens = " ".join(plain_text).replace("\n", " ").split()
+        ints = []
+        for tok in tokens:
+            if tok.isdigit():
+                ints.append(int(tok))
+        if ints:
+            amount = ints[-1]
+
+        # 3) 若无 @，尝试用较长数字作为 QQ（不影响数量）
+        if not target_uid:
+            for tok in tokens:
+                if tok.isdigit() and len(tok) >= 5:
+                    target_uid = tok
+                    break
+
         return amount, target_uid
+
+    def _parse_target_uid(self, event: AstrMessageEvent) -> str:
+        """仅解析目标用户（@ 优先，其次长数字 QQ）。"""
+        try:
+            for comp in event.get_messages():
+                if isinstance(comp, Comp.At) and getattr(comp, "qq", None):
+                    return str(comp.qq)
+        except Exception:
+            pass
+        try:
+            plain_text = []
+            for comp in event.get_messages():
+                if isinstance(comp, Comp.Plain):
+                    t = str(getattr(comp, "text", ""))
+                    if t:
+                        plain_text.append(t)
+            for tok in " ".join(plain_text).split():
+                if tok.isdigit() and len(tok) >= 5:
+                    return tok
+        except Exception:
+            pass
+        return ""
 
     @filter.command("兑换积分")
     async def exchange_points(self, event: AstrMessageEvent):
@@ -425,11 +443,25 @@ class NapcatCheckin(Star):
     @filter.command("签到查询", alias={"查询签到", "余额查询", "积分查询", "我的资产"})
     async def query_assets(self, event: AstrMessageEvent):
         try:
-            _, info = self._get_user_bucket(event)
+            is_admin = self._is_group_admin(event)
+            target_uid = self._parse_target_uid(event)
+            if is_admin and target_uid and target_uid != event.get_sender_id():
+                bucket = self._get_group_ctx_bucket(event)
+                info = bucket.get(target_uid)
+                if not info:
+                    yield event.plain_result("未找到该成员的签到数据")
+                    return
+                queried_uid = target_uid
+                queried_name = info.get("username") or queried_uid
+            else:
+                _, info = self._get_user_bucket(event)
+                queried_uid = event.get_sender_id()
+                queried_name = info.get("username") or queried_uid
             sep = str(self._curr_cfg().get("message_separator", "-------------------------"))
             lines = [
                 "📊 签到资产",
                 sep,
+                f"👤 用户：{queried_name} ({queried_uid})",
                 f"💎 当前积分：{info['points']}",
                 f"🪙 当前元宝：{info['ingots']}",
                 f"📅 累计签到：{info['total_days']}天",
