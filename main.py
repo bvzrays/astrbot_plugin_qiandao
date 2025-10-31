@@ -98,7 +98,7 @@ def _choose_reward(cfg: Dict[str, Any]) -> Tuple[str, int]:
     return "ingots", max(1, amt)
 
 
-@register("astrbot_plugin_qiandao", "bvzrays", "简单的签到插件", "1.0.1")
+@register("astrbot_plugin_qiandao", "bvzrays", "简单的签到插件", "1.0.2")
 class NapcatCheckin(Star):
     def __init__(self, context: Context, config=None):
         super().__init__(context)
@@ -513,6 +513,20 @@ class NapcatCheckin(Star):
         except Exception:
             # 忽略所有异常，避免影响其它流程
             pass
+
+    @filter.command("全局签到重置")
+    async def reset_all(self, event: AstrMessageEvent):
+        try:
+            # 管理员才能执行（全局清空较危险）
+            if not self._is_group_admin(event):
+                yield event.plain_result("仅群管理员可执行此操作")
+                return
+            self.data.clear()
+            _save_data(self.data)
+            yield event.plain_result("已清空全局签到数据")
+        except Exception as e:
+            logger.error(f"全局重置失败: {e}")
+            yield event.plain_result("全局重置失败，请稍后再试")
 
     async def terminate(self):
         pass

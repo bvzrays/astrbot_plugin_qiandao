@@ -1,13 +1,8 @@
 name: astrbot_plugin_qiandao
-display_name: 签到/打卡（Napcat 风格）
+display_name: 签到/打卡（多项可配置）
 desc: 随机奖励积分或元宝（二选一）、支持兑换、月/周排行、数据作用域与消息模板可配置。
-version: 1.0.1
-author: BvzRays
-repo: https://example.com/astrbot_plugin_qiandao
-name: astrbot_plugin_qiandao
-desc: 简单的签到插件
+version: 1.0.2
 author: bvzrays
-version: 1.0.1
+repo: https://github.com/bvzrays/astrbot_plugin_qiandao
 license: MIT
-repo: https://example.com/astrbot_plugin_qiandao
 
